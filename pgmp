@@ -1,0 +1,140 @@
+// pgmp
+// LAM alassane
+//------------------------------------------------------
+
+#ifndef PGMP
+#define PGMP
+
+#include <inttypes.h>
+
+#define size_word  64
+
+#if (size_word==32)
+typedef uint32_t word;
+typedef uint64_t dword;	// double word
+typedef int32_t sword;	// signed word
+typedef uint16_t hword; // half word
+#endif
+#if (size_word==8)
+typedef unsigned char word;
+typedef uint16_t dword;
+typedef char sword;
+#endif
+#if (size_word==16)
+typedef unsigned short word;
+typedef uint32_t dword;
+typedef int16_t sword;
+typedef uint8_t hword;
+#endif
+#if (size_word==64)
+typedef uint64_t word;
+typedef __uint128_t dword;
+typedef int64_t sword;
+typedef uint32_t hword;
+#endif
+
+
+#define	zero		((word)0)
+#define el_flaco	((word)1<<(size_word-1))		// un 1 sur le bit de poids fort 10...0
+#define el_gordo	( ((word)1<<(size_word-1)) - 1 )	// 01...1
+#define all_one		( (word)~0 )				// 1....1
+
+// valeurs rendues par les fonctions de comparaison
+#define	equal	0
+#define	above	1
+#define	below	(-1)
+
+
+//=======================================
+//   arithmetique multiprecision
+//=======================================
+
+// un entier multiprécision est un enregistrement de deux champs
+// la taille sx
+// un tableau de mots x[0]..x[sx-1] -- le chiffre de poids fort x[sx-1] est
+// supposé non nul.
+// les fonctions rendent la taille du résultat
+
+// préfixe :
+// ll long avec long
+// ls long avec court
+
+// copie o dans d et retourne la taille */
+int LCopy(word*d,int so,word*o);
+
+// comparaison de "a" de taille "sa" et de "b" de taille "sb"
+// rend below (-1) si "a" < "b"
+//      equal (0)  si "a" = "b"
+//      above (1)  si "a" > "b"
+int LLCompare(int sa,word*a,int sb,word*b);
+// addition d'un court a un long "r" <-- "a" de taille "sa" + "b"
+int LSAdd(word*r,int sa,word*a,word b);
+// addition longue
+// affecte a "r" la somme de "a" de taille "sa" et de "b" de taille "sb"
+// rend la taille du resultat
+int LLAdd(word*r,int sa,word*a,int sb,word*b);
+// soustraction d'un long et d'un court
+//"r" <-- "a" de taille "sa" + "b"
+// "a" est suppose superieur a "b"
+int LSSub(word*r,int sa,word*a,word b);
+// Soustraction longue "r" <-- "a" taille "sa" - "b" taille "sb"
+// rend la taille de "r"
+int LLSub(word*r,int sa,word*a,int sb,word*b);
+// multiplication/acumulation d'un long par un court "r" <-- "a" de taille "sa" * "b" + "c"
+int LSMul(word*r,int sa,word*a,word b,word c);
+
+// division d'un long "a" de taille "sa" par un court "b"
+// le quotient est affecte a "r" s'il est non nil, rend la taille
+// si "r" est nil, rend 0
+// le reste est affecte à "rem"
+int LSDiv(word*r,int sa,word*a,word b,word* rem);
+
+// multiplication
+// affecte a "r" le produit de "a" de taille "sa" et de "b" de taille "sb"
+// rend la taille du resultat
+int LLMul(word*r,int sa, word*a,int sb, word*b);
+
+// division d'un long par un long
+// affecte a "q" le quotient de "a" (taille "*psa") par "b" (taille "sb")
+// le reste est ecrit dans *psa (taille) et a  (chiffres);
+// rend la taille du quotient "q".p
+// si "q" est NULL, n'ecrit pas le quotient, la valeur rendue est non significative.
+int LLDiv(word*q,int*psa,word*a,int sb,word*b);
+
+// affecte a "r" le carre de "a"  (r different de a)
+// moins de multiplications grace au double produit
+// Nécessite d'allouer pour "r" une taille de 2"sa" mots, y compris si
+// le resultat tient sur moins.
+int LSqr(word*r,int sa, word*a);
+
+// décalage sur place de n positions vers la gauche
+int LShl(word*y,int sx,word*x,int n);
+// décalage sur place de n positions vers la droite
+int LShr(word*y,int sx,word*x,int n);
+
+//==========================================
+// fonctions de conversion ascii <--> long
+//==========================================
+// chaine ascii --> nombre
+// rend le nombre de digits
+int AToL(word*r,char*s,int base);
+// conversion d'un "long" en chaine ascii
+// ATTENTION : cette procédure détruit le "long" qui est en paramètre
+// penser à effectuer une recopie
+int LToA(char*s,int sa, word*a,int base);
+
+long int digit(char c);
+
+
+//////////////////////////////////////////
+// Diverses manipulations élémentaires  //
+//////////////////////////////////////////
+
+// rend la position du dernier 1 de la représentation binaire de x
+// rend -1 si x est nul, 0 si x est impair, etc...
+int LastOne(word x);
+// idem pour des longs
+int LLastOne(int sx,word*x);
+
+
+#endif
